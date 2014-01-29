@@ -1,0 +1,56 @@
+<script src="dsync.js"></script>
+<script src="example.js"></script>
+
+<!-- Typescript example, see example.ts -->
+<script>
+</script>
+
+<textarea id="src1" onkeyup="sync1.touch()" onchanged="sync1.touch()">Text</textarea>
+<div id="content1">EMPTY</div>
+<div id="timer1">0</div>
+
+
+<!-- Javascript example -->
+<script>
+  var sync = dsync.Container();
+  var model = { 
+    src: document.getElementById('src1'), 
+    content: '', 
+    stop: false 
+  };
+  var display = { 
+    content: document.getElementById('content1'),
+    timer: document.getElementById('timer')
+  };
+  
+  // Watch for changes
+  sync.add(model, display, {
+    sync: function() {
+      display.content.innerHTML = model.content;
+      return !model.stop;
+    },
+    state: function(model) {
+      return [
+        model.content,
+        model.stop
+      ];
+    }
+  });
+  sync.add(model, display, {
+    sync: function() {
+    },
+    state: function(model) {
+    }
+  });
+
+
+    model.content = model.src.innerHTML;
+    return !model.stop;
+    return [ model.src.innerHTML ];
+
+  window['sync1'] = sync;
+}
+</script>
+
+<textarea id="src2">Text</textarea>
+<div id="content2">EMPTY</div>

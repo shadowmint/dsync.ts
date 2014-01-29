@@ -49,7 +49,7 @@ module.exports = function (grunt) {
     },
     open: {
       dev: {
-        path: 'http://localhost:8080/index.html'
+        path: 'http://localhost:8089/index.html'
       }
     }
   });
