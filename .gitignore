@@ -26,3 +26,5 @@ node_modules
 public/libs
 .DS_Store
 cache/*
+example/*.js
+example/*.d.ts

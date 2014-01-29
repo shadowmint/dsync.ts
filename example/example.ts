@@ -1,5 +1,5 @@
-/// <reference path="__init__.ts"/>
-module dsync {
+/// <reference path="dsync.d.ts"/>
+module example {
   export class Sync<U, V> {
     public sync(model:U, display:V, dt:number):boolean {
       return this._update();
