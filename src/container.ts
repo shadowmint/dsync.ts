@@ -4,10 +4,19 @@ module dsync {
 
       private _touched:boolean = false;
 
-      public bind(sync:ISync):void {
+      private _timestamp:number = 0;
+
+      public bind<U, V>(sync:ISync<U, V>, model:U, display:V):void {
       }
 
       public touch():void {
+        this._touched = true;
+      }
+
+      public update():void {
+      }
+
+      public poll():void {
       }
   }
 }
