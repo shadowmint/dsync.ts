@@ -1,5 +1,5 @@
 /// <reference path="dsync.d.ts"/>
-interface EgModel {
+/*interface EgModel {
   src:HTMLElement;
   content:string;
   stop:boolean;
@@ -47,18 +47,18 @@ class ModelRSync extends Sync<Model, DisplayModel> {
 
 function main() {
   var sync = dsync.Container();
-  var model = <EgModel> { 
-    src: document.getElementById('src1'), 
-    content: '', 
-    stop: false 
+  var model = <EgModel> {
+    src: document.getElementById('src1'),
+    content: '',
+    stop: false
   };
-  var display = <EgDisplayModel> { 
+  var display = <EgDisplayModel> {
     content: document.getElementById('content1'),
     timer: document.getElementById('timer')
   };
-  
+
   // Watch for changes
   sync.add(ModelSync, model, display);
   sync.add(ModelRSync, model, display);
   window['sync1'] = sync;
-}
+}*/
