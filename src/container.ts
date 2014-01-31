@@ -6,6 +6,7 @@ module dsync {
 
       private _timestamp:number = 0;
 
+      // Need to make these into singleton instances.
       public bind<U, V>(sync:ISync<U, V>, model:U, display:V):void {
       }
 
