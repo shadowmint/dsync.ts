@@ -6,7 +6,6 @@ module dsync {
         export function watch(sync:Sync, e:HTMLElement, events:string[], channel:Channel):void {
             for (var i = 0; i < events.length; ++i) {
                 addEventListener(e, events[i], () => {
-                    alert('Triggering update');
                     channel.ready = true;
                     sync.update();
                 });

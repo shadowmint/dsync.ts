@@ -27,18 +27,16 @@ module dsync {
 
         /* Update all child elements if they have altered state */
         public update():void {
-            if (!this.ready) {
-                return;
-            }
             var now = Date.now();
             var dt = this.timestamp == 0 ? 1 : now - this.timestamp;
             this.timestamp = now;
             var dropped:boolean = false;
             for (var i = 0; i < this.children.length; ++i) {
                 var child = this.children[i];
-                if (this.updated(child, dt)) {
-                    child.alive = child.sync(child.model, child.display, dt);
-                    if (child.alive) {
+                var index = this.updated(child, dt);
+                if (index >= 0) {
+                    child.alive = child.sync(child.model, child.display, index, dt);
+                    if (!child.alive) {
                         dropped = true;
                     }
                 }
@@ -54,17 +52,22 @@ module dsync {
             }
         }
 
-        /* Check if a child has updated */
-        public updated<U, V>(target:Binding<U, V>, dt:number):boolean {
+        /*
+         * Check if a child has updated.
+         * @param target A sync binding.
+         * @param dt The time delta since last update.
+         * @return the index into the state array of the first changed value.
+         */
+        public updated<U, V>(target:Binding<U, V>, dt:number):number {
             if (target.last == null) {
-                target.last = target.state(target.model, dt);
-                return true;
+                target.last = target.state(target.model, target.display, dt);
+                return target.state.length;
             }
-            var state = target.state(target.model, dt);
-            var changed = false;
+            var state = target.state(target.model, target.display, dt);
+            var changed:number = -1;
             for (var i = 0; i < state.length; ++i) {
                 if (state[i] !== target.last[i]) {
-                    changed = true;
+                    changed = i;
                     target.last = state;
                     break;
                 }

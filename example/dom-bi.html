@@ -26,13 +26,13 @@
 </p>
 <textarea id="src1"></textarea>
 <div id="content1"></div>
-<a id="reset" href="#" onclick="model.content='EMPTY';">reset</a>
+<a href="#" id="reset" onclick="model.content='EMPTY';">reset</a>
 
 <!-- Javascript example -->
 <script>
   var sync = new dsync.Sync();
   var model = {
-    content: 'Hello world this is a value from the model state.<br/><br/><b>This is a fun</b><input type="text" style="float: right;"/>'
+    content: 'Hello world'
   };
   var display = {
     src: document.getElementById('src1'),
@@ -42,29 +42,25 @@
   // Setup
   sync.channel('hello')
 
-  // Update content from model
-  // If the src is out of sync, sync it.
-  var stateModel = function(m) { return [m.content] };
-  var applyModel = function(m, d) {
-      d.out.innerHTML = m.content;
-      if (d.src.value != m.content) {
+  // Notice how compared to dom.html this only uses a single more complex binding
+  // between display and model. The state arguments are returned in a specific
+  // order and the 'changed index' is  used to determine which changed; the model
+  // or the DOM, and behave appropriately.
+  var stateModel = function(m, d) { return [d.src.value, m.content] };
+  var applyModel = function(m, d, i) {
+      if (i == 0) {
+          m.content = d.src.value;
+      }
+      else {
+          // NB. This runs for i == 1 and for 2 which is the special startup value.
           d.src.value = m.content;
       }
-      return true;
-  };
-
-  // Update model when src changes and trigger a sync update
-  // Notice how touch() is called because this has modifed the model state.
-  var stateDsp = function(m, d) { return [d.src.value] };
-  var applyDsp = function(m, d) {
-      sync.touch(sync.channels.hello);
-      m.content = d.src.value;
+      d.out.innerHTML = m.content;
       return true;
   };
 
   // Update on changes to src
   sync.channel(sync.channels.hello).add(applyModel, stateModel, model, display);
-  sync.channel(sync.channels.hello).add(applyDsp, stateDsp, model, display);
 
   // Trigger sync on state changes
   sync.watch(display.src, ['keydown'], sync.channels.hello);

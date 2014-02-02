@@ -27,7 +27,7 @@ module.exports = function (grunt) {
         },
         ts: {
             lib: {
-                src: ['src/*.ts'],
+                src: ['src/**/*.ts'],
                 out: 'bin/dsync.js',
                 options: {
                     target: 'es3',
@@ -70,7 +70,7 @@ module.exports = function (grunt) {
                 tasks: ['ts:example']
             },
             tests: {
-                files: ['src/*.ts', 'tests/**/*.ts'],
+                files: ['src/**/*.ts', 'tests/**/*.ts'],
                 tasks: ['ts:lib', 'ts:tests', 'exec:tests']
             }
         },

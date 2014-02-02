@@ -20,7 +20,7 @@ module dsync {
          * Create an instance of the sync class
          * @param pollRate The minimum interval in ms between updates.
          */
-        public constructor(pollRate:number = 100) {
+        public constructor(pollRate:number = 10) {
             this._pollRate = pollRate;
         }
 
@@ -37,24 +37,30 @@ module dsync {
         public update():void {
             if (this._timer == null) {
                 this._timer = setTimeout(() => {
+                    this._timer = null;
                     for (var key in this._channels) {
                         var chan = this._channels[key];
                         if (chan.ready) {
-                            chan.update();
                             chan.ready = false;
+                            chan.update();
                         }
                     }
                 }, this._pollRate);
             }
         }
 
-        /* Touch a channel to make it update next frame */
+        /*
+         * Touch a channel to make it update next frame
+         * Notice this is an async request.
+         */
         public touch(channel:any) {
-            if (typeof(channel) == 'string') {
-                channel = this.channel(channel);
-            }
-            channel.ready = true;
-            this.update();
+            setTimeout(() => {
+                if (typeof(channel) == 'string') {
+                    channel = this.channel(channel);
+                }
+                channel.ready = true;
+                this.update();
+            }, 1);
         }
 
         /*
