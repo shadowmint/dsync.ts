@@ -1,79 +1,73 @@
 /// <reference path="__init__.ts"/>
 module dsync {
 
-    /* Base interface for any synchronization actions. */
-    export interface ISync<U, V> {
+    /* Top level manager for a set of synchronized objects */
+    export class Sync {
+
+        /* Channels */
+        public channels:any = {};
+
+        /* Actual channel objects */
+        private _channels:{[key:string]:Channel } = {};
+
+        /* The rate at which we poll for changes */
+        private _pollRate:number;
+
+        /* If we have a pending update, the timer goes here */
+        private _timer:any = null;
 
         /*
-         * Generate a new model/display from the current model/display state.
-         * This function is only invoked if the state() call has changed.
-         * To stop tracking this sync in the container, return false.
-         *
-         * This is considered an expensive operation and every attempt is
-         * made to minimize the number of times it is called.
-         *
-         * @param model An instance of the model type.
-         * @param display An instance of the display model type.
-         * @param dt The time since the last time this was called.
+         * Create an instance of the sync class
+         * @param pollRate The minimum interval in ms between updates.
          */
-        sync(model:U, display:V, dt:number):boolean;
+        public constructor(pollRate:number = 100) {
+            this._pollRate = pollRate;
+        }
 
-        /*
-         * Generate a new state array for this object.
-         *
-         * The state comparison algorithm is simple and predictable:
-         *
-         *    for element i in state:
-         *      if state[i] !== previous_state[i]
-         *        return true
-         *
-         * This is considered a cheap operation and will be invoked
-         * often, best performance can be given by minimizing the size
-         * and cost of generate the return array.
-         *
-         * @param model An instance of the model type.
-         * @param display An instance of the display model type.
-         * @param dt The time since the last time this was called.
-         */
-        state(model:U, display:V, dt:number):any[];
-    }
+        /* Get access to an events channel */
+        public channel(name:string):Channel {
+            if (this.channels[name] === undefined) {
+                this.channels[name] = name;
+                this._channels[name] = new dsync.Channel();
+            }
+            return this._channels[name];
+        }
 
-    /* Sync is a helper class that implements ISync */
-    export class Sync<U, V> implements ISync<U, V> {
+        /* Update channels async */
+        public update():void {
+            if (this._timer == null) {
+                this._timer = setTimeout(() => {
+                    for (var key in this._channels) {
+                        var chan = this._channels[key];
+                        if (chan.ready) {
+                            chan.update();
+                            chan.ready = false;
+                        }
+                    }
+                }, this._pollRate);
+            }
+        }
 
-        /* The length of time since the last time sync was called */
-        public idle:number = 0;
-
-        /*
-         * Generate a new model/display from the current model/display state.
-         * see ISync::sync
-         *
-         * The default action is to do nothing.
-         *
-         * @param model An instance of the model type.
-         * @param display An instance of the display model type.
-         * @param dt The time since the last time this was called.
-         */
-        sync(model:U, display:V, dt:number):boolean {
-            return true;
+        /* Touch a channel to make it update next frame */
+        public touch(channel:any) {
+            if (typeof(channel) == 'string') {
+                channel = this.channel(channel);
+            }
+            channel.ready = true;
+            this.update();
         }
 
         /*
-         * Generate a new state array for this object.
-         * see ISync::state
-         *
-         * Notice the 'idle' member of the this class. Framerate can
-         * be controlled easily using this, eg. return [ dt > 100 ];
-         *
-         * The default action is return the time delta; that is,
-         * update every update.
-         *
-         * @param model An instance of the model type.
-         * @param display An instance of the display model type.
-         * @param dt The time since the last time this was called.
+         * Watch DOM changes on an element and trigger a channel
+         * @param e The element to watch
+         * @param event The event to trigger on
+         * @param channel The channel to invoke when it happens
          */
-        state(model:U, display:V, dt:number):any[] {
-            return [dt];
+        public watch(e:HTMLElement, events:string[], channel:any):void {
+            if (typeof(channel) == 'string') {
+                channel = this.channel(channel);
+            }
+            dsync.dom.watch(this, e, events, channel);
         }
     }
 }

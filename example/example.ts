@@ -1,4 +1,4 @@
-/// <reference path="dsync.d.ts"/>
+/// <reference path="../bin/dsync.d.ts"/>
 /*interface EgModel {
   src:HTMLElement;
   content:string;

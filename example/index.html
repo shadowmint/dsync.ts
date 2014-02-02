@@ -12,30 +12,24 @@
 
 <!-- Javascript example -->
 <script>
-  var sync = dsync.Container();
+  var sync = dsync.Sync();
   var model = { 
     src: document.getElementById('src1'), 
     content: '', 
-    stop: false 
+    stop: false
   };
   var display = { 
     content: document.getElementById('content1'),
-    timer: document.getElementById('timer')
   };
   
   // Watch for changes
-  sync.add(model, display, {
-    sync: function() {
-      display.content.innerHTML = model.content;
-      return !model.stop;
-    },
-    state: function(model) {
-      return [
-        model.content,
-        model.stop
-      ];
-    }
-  });
+  sync.channel('hello');
+  sync.add(function(model, display) {
+
+  }, function(model, dt) {
+
+  }, model, display);
+  sync.watch(model.src, ['keydown'], )
   sync.add(model, display, {
     sync: function() {
     },

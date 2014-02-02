@@ -25,11 +25,3 @@ node_modules
 .sass-cache
 public/libs
 .DS_Store
-cache/*
-example/*.js
-example/*.d.ts
-example/*.js.map
-bin/*.js
-bin/*.d.ts
-bin/*.js.map
-tscommand.tmp.txt

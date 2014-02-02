@@ -1,0 +1,35 @@
+<script src="../bin/dsync.js"></script>
+
+<textarea id="src1">Text</textarea>
+<div id="content1">EMPTY</div>
+
+<!-- Javascript example -->
+<script>
+  var sync = new dsync.Sync();
+  var model = { 
+    src: document.getElementById('src1'), 
+    content: '', 
+    stop: false
+  };
+  var display = { 
+    content: document.getElementById('content1'),
+  };
+
+  // Setup
+  sync.channel('hello')
+
+  // Update content from model
+  var applyModel = function(m, d) {d.innerHTML = m.content; return true; };
+  var stateModel = function(m) { return [m.content] };
+
+  // Update model when src changes and trigger a sync update
+  var applyDsp = function(m, d, dt, s) {m.content = d.value; sync.touch(sync.channels.hello); return true; };
+  var stateDsp = function(d) { return [d.value] };
+
+  // Update on changes to src
+  sync.channel(sync.channels.hello).add(applyModel, stateModel, model, display);
+  sync.channel(sync.channels.hello).add(applyDsp, stateDsp, model, display);
+
+  // Trigger sync on state changes
+  sync.watch(model.src, ['keydown'], sync.channels.hello);
+</script>

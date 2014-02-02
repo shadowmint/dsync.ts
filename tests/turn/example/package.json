@@ -1,0 +1,11 @@
+{
+  "name": "tests",
+  "version": "0.1.0",
+  "author": "",
+  "description": "",
+  "homepage": "",
+  "private": true,
+  "devDependencies": {
+    "typescript": "~0.9.5"
+  }
+}
