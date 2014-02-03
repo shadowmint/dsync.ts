@@ -7,7 +7,8 @@ module physics {
         public parent:Demo;
         public alive:boolean; /* Is this block still alive? */
         public geom:number[]; /* x, y, width, height, rotation */
-        public age:number;  /* How long have we been alive? */
+        public age:number;    /* How long have we been alive? */
+        public body:any;      /* Box 2D body */
     }
 
     /* Display for a block object */
@@ -50,6 +51,14 @@ module physics {
     }
 
     /* Box2D world */
+    export class Box2D {
+
+        /* Create a world */
+
+        /* Create a body for the given block */
+
+        /* Timestep */
+    }
 
 
     /* Various actions on block elements */
@@ -78,14 +87,12 @@ module physics {
             s.gc.scale.y = b.geom[3] / 100.0;
             s.gc.rotation = b.geom[4];
             b.age += dt;
-            console.log('Updated to: ' + JSON.stringify(b.geom));
             return b.alive;
         }
 
         /* Generate a state record for the block */
         public blockState(b:Block, s:Sprite, dt:number):any[] {
             var rtn = b.geom.slice(0);
-            console.log('state: ' + JSON.stringify(rtn));
             return rtn;
         }
 

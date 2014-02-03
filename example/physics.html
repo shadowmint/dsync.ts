@@ -10,10 +10,10 @@
     var demo = new physics.Demo();
     demo.pixi.start();
 
-    demo.create(10, 40);
-    demo.create(50, 40);
-    demo.create(80, 40);
-    demo.create(110, 40);
+    demo.create(10, 400);
+    demo.create(50, 400);
+    demo.create(80, 400);
+    demo.create(110, 400);
     demo.blocks[1].geom[0] = 50;
     demo.blocks[1].geom[4] = 1;
     demo.blocks[1].geom[0] = 100;
@@ -31,16 +31,17 @@
     var bd_ground = new Box2D.b2BodyDef();
     var ground = world.CreateBody(bd_ground);
     var shape0 = new Box2D.b2EdgeShape();
-    shape0.Set(new Box2D.b2Vec2(0, 0), new Box2D.b2Vec2(400.0, 0));
+    shape0.Set(new Box2D.b2Vec2(-400, 0), new Box2D.b2Vec2(400.0, -10));
     ground.CreateFixture(shape0, 0.0);
 
     // Block
     for (var i = 0; i < demo.blocks.length; ++i) {
         var shape = new Box2D.b2PolygonShape();
-        shape.SetAsBox(demo.blocks[i].geom[3], demo.blocks[i].geom[4]);
+        shape.SetAsBox(demo.blocks[i].geom[2] / 2, demo.blocks[i].geom[3] / 2);
+        shape.SetAsBox(10, 10);
         shape.density = 1;
 
-        var ZERO = new Box2D.b2Vec2(200.0, 400.0);
+        var ZERO = new Box2D.b2Vec2(demo.blocks[i].geom[0], demo.blocks[i].geom[1]);
 
         var bd = new Box2D.b2BodyDef();
         bd.set_type(Box2D.b2_dynamicBody);
@@ -49,25 +50,28 @@
         var body = world.CreateBody(bd);
         body.CreateFixture(shape, 1);
         bodies.push(body);
+        demo.blocks[i].body = body;
     }
 
-    function readObject(i, data) {
-        var body = bodies[i];
+    function readObject(b) {
+        var body = b.body;
         var bpos = body.GetPosition();
-        data.x = bpos.get_x();
-        data.y = bpos.get_y();
-        data.angle = body.GetAngle();
+        b.geom[0] = bpos.get_x();
+        b.geom[1] = 400 - bpos.get_y();
+        b.geom[4] = body.GetAngle();
     }
 
     var data = {};
     var step = function () {
-        var dt = 100;
+        var dt = 50;
         world.Step(dt, 2, 2);
-        readObject(0, data);
-        console.log(JSON.stringify(data));
-        setTimeout(step, 1000);
+        for (var i = 0; i < demo.blocks.length; ++i) {
+            var b = demo.blocks[i];
+            readObject(b);
+        }
+        demo.sync.touch(demo.sync.channels.physics);
+        setTimeout(step, 50);
     }
-
     step();
 </script>
 </body>
