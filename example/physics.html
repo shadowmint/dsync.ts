@@ -1,24 +1,73 @@
 <head>
     <script src="../bin/dsync.js"></script>
     <script src="bower_components/pixi/bin/pixi.js"></script>
+    <script src="bower_components/box2d/box2d.js"></script>
     <script src="example.js"></script>
 </head>
 <body>
 
-    <script>
-        var demo = new physics.Demo();
-        demo.pixi.start();
+<script>
+    var demo = new physics.Demo();
+    demo.pixi.start();
 
-        demo.create(10, 40);
-        demo.create(50, 40);
-        demo.create(80, 40);
-        demo.create(110, 40);
-        demo.blocks[1].geom[0] = 50;
-        demo.blocks[1].geom[4] = 1;
-        demo.blocks[1].geom[0] = 100;
-        demo.blocks[1].geom[2] = 20;
-        demo.blocks[1].geom[0] = 200;
-        demo.blocks[1].geom[3] = 20;
-        demo.sync.touch(demo.sync.channels.physics);
-    </script>
+    demo.create(10, 40);
+    demo.create(50, 40);
+    demo.create(80, 40);
+    demo.create(110, 40);
+    demo.blocks[1].geom[0] = 50;
+    demo.blocks[1].geom[4] = 1;
+    demo.blocks[1].geom[0] = 100;
+    demo.blocks[1].geom[2] = 20;
+    demo.blocks[1].geom[0] = 200;
+    demo.blocks[1].geom[3] = 20;
+    demo.sync.touch(demo.sync.channels.physics);
+
+    var bodies = [];
+
+    var gravity = new Box2D.b2Vec2(0.0, -10.0);
+    var world = new Box2D.b2World(gravity, true);
+
+    // Ground
+    var bd_ground = new Box2D.b2BodyDef();
+    var ground = world.CreateBody(bd_ground);
+    var shape0 = new Box2D.b2EdgeShape();
+    shape0.Set(new Box2D.b2Vec2(0, 0), new Box2D.b2Vec2(400.0, 0));
+    ground.CreateFixture(shape0, 0.0);
+
+    // Block
+    for (var i = 0; i < demo.blocks.length; ++i) {
+        var shape = new Box2D.b2PolygonShape();
+        shape.SetAsBox(demo.blocks[i].geom[3], demo.blocks[i].geom[4]);
+        shape.density = 1;
+
+        var ZERO = new Box2D.b2Vec2(200.0, 400.0);
+
+        var bd = new Box2D.b2BodyDef();
+        bd.set_type(Box2D.b2_dynamicBody);
+        bd.set_position(ZERO);
+
+        var body = world.CreateBody(bd);
+        body.CreateFixture(shape, 1);
+        bodies.push(body);
+    }
+
+    function readObject(i, data) {
+        var body = bodies[i];
+        var bpos = body.GetPosition();
+        data.x = bpos.get_x();
+        data.y = bpos.get_y();
+        data.angle = body.GetAngle();
+    }
+
+    var data = {};
+    var step = function () {
+        var dt = 100;
+        world.Step(dt, 2, 2);
+        readObject(0, data);
+        console.log(JSON.stringify(data));
+        setTimeout(step, 1000);
+    }
+
+    step();
+</script>
 </body>

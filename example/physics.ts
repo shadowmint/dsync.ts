@@ -32,7 +32,7 @@ module physics {
 
         constructor(sync:dsync.Sync) {
             this.renderer = PIXI.autoDetectRenderer(500, 500);
-            this.stage = new PIXI.Stage;
+            this.stage = new PIXI.Stage(0xffffff);
             document.body.appendChild(<HTMLElement> this.renderer.view);
             this._worker = () => { this.animate(); };
             this.sync = sync;
@@ -48,6 +48,9 @@ module physics {
             requestAnimationFrame(this._worker);
         }
     }
+
+    /* Box2D world */
+
 
     /* Various actions on block elements */
     export class Demo {
@@ -71,8 +74,8 @@ module physics {
         public blockSync(b:Block, s:Sprite, index:number, dt:number):boolean {
             s.gc.position.x = b.geom[0];
             s.gc.position.y = b.geom[1];
-            s.gc.width = b.geom[2];
-            s.gc.height = b.geom[3];
+            s.gc.scale.x = b.geom[2] / 100.0;
+            s.gc.scale.y = b.geom[3] / 100.0;
             s.gc.rotation = b.geom[4];
             b.age += dt;
             console.log('Updated to: ' + JSON.stringify(b.geom));
@@ -89,11 +92,10 @@ module physics {
         /* Factory for block objects */
         private _createSprite():Sprite {
             var rtn = new Sprite();
-            var color =  (Math.floor(Math.random() * 255) << 16) + (Math.floor(Math.random() * 255) << 8) + (Math.floor(Math.random() * 255) << 8);
+            var color = 0x333333 + (Math.floor(Math.random() * 128) << 16) + (Math.floor(Math.random() * 128) << 8) + (Math.floor(Math.random() * 128) << 8);
             rtn.gc = new PIXI.Graphics();
             rtn.gc.beginFill(color);
             rtn.gc.drawRect(0, 0, 100, 100);
-            rtn.gc.alpha = 0.5;
             this.pixi.stage.addChild(rtn.gc);
             return rtn;
         }
