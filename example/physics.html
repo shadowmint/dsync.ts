@@ -1,0 +1,24 @@
+<head>
+    <script src="../bin/dsync.js"></script>
+    <script src="bower_components/pixi/bin/pixi.js"></script>
+    <script src="example.js"></script>
+</head>
+<body>
+
+    <script>
+        var demo = new physics.Demo();
+        demo.pixi.start();
+
+        demo.create(10, 40);
+        demo.create(50, 40);
+        demo.create(80, 40);
+        demo.create(110, 40);
+        demo.blocks[1].geom[0] = 50;
+        demo.blocks[1].geom[4] = 1;
+        demo.blocks[1].geom[0] = 100;
+        demo.blocks[1].geom[2] = 20;
+        demo.blocks[1].geom[0] = 200;
+        demo.blocks[1].geom[3] = 20;
+        demo.sync.touch(demo.sync.channels.physics);
+    </script>
+</body>

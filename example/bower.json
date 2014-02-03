@@ -1,0 +1,8 @@
+{
+  "name": "dsync",
+  "version": "0.1.0",
+  "dependencies": {
+    "pixi": "https://github.com/GoodBoyDigital/pixi.js.git#1.4.3",
+    "box2d": "https://github.com/shadowmint/box2d.js.git#0.1"
+  }
+}
