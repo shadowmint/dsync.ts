@@ -5,12 +5,12 @@ module dsync {
      * The call to update the display from the model.
      * @param model The model object to get state from.
      * @param display The display object to update.
-     * @param index The index of the first changed element in the state array.
+     * @param changed An array of true/false change states for each state element.
      * @param dt The delta in ms since the last time this was called.
      * @return True to continue tracking this binding and false to discard it.
      */
     export interface Update<U, V> {
-        (model:U, display:V, index:number, dt:number):boolean;
+        (model:U, display:V, changed:boolean[], dt:number):boolean;
     }
 
     /*

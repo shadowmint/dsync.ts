@@ -80,7 +80,7 @@ module physics {
         }
 
         /* Update the sprite to match the model */
-        public blockSync(b:Block, s:Sprite, index:number, dt:number):boolean {
+        public blockSync(b:Block, s:Sprite, changed:boolean[], dt:number):boolean {
             s.gc.position.x = b.geom[0];
             s.gc.position.y = b.geom[1];
             s.gc.scale.x = b.geom[2] / 100.0;

@@ -17,7 +17,7 @@ class SyncTests extends turn.TestCase {
         var channel = <dsync.Channel> sync.channel('Hello');
 
         channel.add<any, any>(
-            (a:any, b:any, dt:number):boolean => { return true; },
+            (a:any, b:any, changed:boolean[], dt:number):boolean => { return true; },
             (a:any, dt:number):any[] => { return []; },
             {},
             {}
@@ -31,7 +31,7 @@ class SyncTests extends turn.TestCase {
         var sync = new dsync.Sync();
         var channel = <dsync.Channel> sync.channel('Hello');
         channel.add<any, any>(
-            (a:any, b:any, dt:number):boolean => {
+            (a:any, b:any, changed:boolean[], dt:number):boolean => {
                 value = value + 1;
                 return true;
             },
@@ -60,7 +60,7 @@ class SyncTests extends turn.TestCase {
         var synced:number = 0;
 
         channel.add<any, any>(
-            (a:any, b:any, dt:number):boolean => { synced += 1; return true; },
+            (a:any, b:any, changed:boolean[], dt:number):boolean => { synced += 1; return true; },
             (a:any, dt:number):any[] => { return [1]; },
             {},
             {}

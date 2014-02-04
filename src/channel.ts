@@ -31,12 +31,14 @@ module dsync {
             var dt = this.timestamp == 0 ? 1 : now - this.timestamp;
             this.timestamp = now;
             var dropped:boolean = false;
+            var changed = [];
+            var change = false;
             for (var i = 0; i < this.children.length; ++i) {
                 var child = this.children[i];
                 // Pass the array in here, so we don't have to return an array
-                var index = this.updated(child, dt);
-                if (index >= 0) {
-                    child.alive = child.sync(child.model, child.display, index, dt);
+                change = this.updated(child, changed, dt);
+                if (change) {
+                    child.alive = child.sync(child.model, child.display, changed, dt);
                     if (!child.alive) {
                         dropped = true;
                     }
@@ -56,21 +58,29 @@ module dsync {
         /*
          * Check if a child has updated.
          * @param target A sync binding.
+         * @param changed An array to put changed booleans into.
          * @param dt The time delta since last update.
          * @return the index into the state array of the first changed value.
          */
-        public updated<U, V>(target:Binding<U, V>, dt:number):number[] {
-            var rtn:number[] = [];
+        public updated<U, V>(target:Binding<U, V>, changed:boolean[], dt:number):boolean {
+            changed.splice(0);
             if (target.last == null) {
                 target.last = target.state(target.model, target.display, dt);
-                return target.state.length;
+                for (var i = 0; i < target.last.length; ++i) {
+                  changed.push(true);
+                }
+                return true;
             }
+            var change = false;
             var state = target.state(target.model, target.display, dt);
             for (var i = 0; i < state.length; ++i) {
-                rtn.push(state[i] !== target.last[i]);
+                changed.push(state[i] !== target.last[i]);
+                if (changed[i]) {
+                  change = true;
+                }
             }
             target.last = state;
-            return rtn;
+            return change;
         }
     }
 }

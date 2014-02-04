@@ -47,8 +47,8 @@
   // order and the 'changed index' is  used to determine which changed; the model
   // or the DOM, and behave appropriately.
   var stateModel = function(m, d) { return [d.src.value, m.content] };
-  var applyModel = function(m, d, i) {
-      if (i == 0) {
+  var applyModel = function(m, d, c) {
+      if (c[0]) {
           m.content = d.src.value;
       }
       else {
