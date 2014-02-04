@@ -33,6 +33,7 @@ module dsync {
             var dropped:boolean = false;
             for (var i = 0; i < this.children.length; ++i) {
                 var child = this.children[i];
+                // Pass the array in here, so we don't have to return an array
                 var index = this.updated(child, dt);
                 if (index >= 0) {
                     child.alive = child.sync(child.model, child.display, index, dt);
@@ -58,21 +59,18 @@ module dsync {
          * @param dt The time delta since last update.
          * @return the index into the state array of the first changed value.
          */
-        public updated<U, V>(target:Binding<U, V>, dt:number):number {
+        public updated<U, V>(target:Binding<U, V>, dt:number):number[] {
+            var rtn:number[] = [];
             if (target.last == null) {
                 target.last = target.state(target.model, target.display, dt);
                 return target.state.length;
             }
             var state = target.state(target.model, target.display, dt);
-            var changed:number = -1;
             for (var i = 0; i < state.length; ++i) {
-                if (state[i] !== target.last[i]) {
-                    changed = i;
-                    target.last = state;
-                    break;
-                }
+                rtn.push(state[i] !== target.last[i]);
             }
-            return changed;
+            target.last = state;
+            return rtn;
         }
     }
 }
