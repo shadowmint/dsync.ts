@@ -83,5 +83,4 @@ module.exports = function (grunt) {
 
     grunt.registerTask('default', ['clean', 'ts:lib', 'ts:tests', 'exec:tests']);
     grunt.registerTask('dev', ['clean', 'ts', 'exec:tests', 'connect', 'open', 'watch']);
-    grunt.registerTask('test', ['clean', 'ts:lib', 'ts:tests', 'exec:tests']);
 }
