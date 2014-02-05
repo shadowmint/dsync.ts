@@ -32,8 +32,8 @@ module physics {
         private _worker:any;
 
         constructor(sync:dsync.Sync) {
-            this.renderer = PIXI.autoDetectRenderer(500, 500);
             this.stage = new PIXI.Stage(0xffffff);
+            this.renderer = PIXI.autoDetectRenderer(500, 500);
             document.body.appendChild(<HTMLElement> this.renderer.view);
             this._worker = () => { this.animate(); };
             this.sync = sync;
@@ -81,11 +81,11 @@ module physics {
 
         /* Update the sprite to match the model */
         public blockSync(b:Block, s:Sprite, changed:boolean[], dt:number):boolean {
-            s.gc.position.x = b.geom[0];
-            s.gc.position.y = b.geom[1];
-            s.gc.scale.x = b.geom[2] / 100.0;
-            s.gc.scale.y = b.geom[3] / 100.0;
-            s.gc.rotation = b.geom[4];
+            s.gc.position.x = b.geom[0] * 50;
+            s.gc.position.y = b.geom[1] * 50;
+            s.gc.scale.x = b.geom[2];
+            s.gc.scale.y = b.geom[3];
+            s.gc.rotation = -b.geom[4];
             b.age += dt;
             return b.alive;
         }
@@ -102,7 +102,7 @@ module physics {
             var color = 0x333333 + (Math.floor(Math.random() * 128) << 16) + (Math.floor(Math.random() * 128) << 8) + (Math.floor(Math.random() * 128) << 8);
             rtn.gc = new PIXI.Graphics();
             rtn.gc.beginFill(color);
-            rtn.gc.drawRect(0, 0, 100, 100);
+            rtn.gc.drawRect(-50, -50, 100, 100);
             this.pixi.stage.addChild(rtn.gc);
             return rtn;
         }
@@ -111,7 +111,7 @@ module physics {
         private _createBlock(x:number, y:number):Block {
             var rtn = new Block();
             rtn.alive = true;
-            rtn.geom = [x, y, 10, 10, 0];
+            rtn.geom = [x, y, 0.5, 0.5, 0];
             rtn.parent = this;
             rtn.age = 0;
             this.blocks.push(rtn);
