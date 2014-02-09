@@ -16,6 +16,6 @@
     "grunt-exec": "~0.4.3"
   },
   "scripts": {
-    "dev": "npm install && grunt dev"
+    "dev": "git submodule init && git submodule update && npm install && cd example; bower install; cd .. && grunt dev"
   }
 }

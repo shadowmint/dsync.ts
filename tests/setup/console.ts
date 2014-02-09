@@ -12,4 +12,3 @@ class ConsoleLogger implements turn.TestLogger {
         console.error(msg, e);
     }
 }
-var runner = new turn.TestRunner(new ConsoleLogger());
