@@ -13,8 +13,11 @@ module dsync {
         /* If this channel currently needs an update */
         public ready:boolean = true;
 
+        /* Locked into a ready state? */
+        public locked:boolean = false;
+
         /* Add a sync model-display binding to this channel */
-        public add<U, V>(sync:Update<U,V>, state:State<U,V>, model:U, display:V):void {
+        public add<U, V>(model:U, display:V, sync:Update<U,V>, state:State<U,V> = null):void {
             this.children.push(<Binding<U,V>> {
                 sync: sync,
                 state: state,
@@ -35,7 +38,6 @@ module dsync {
             var change = false;
             for (var i = 0; i < this.children.length; ++i) {
                 var child = this.children[i];
-                // Pass the array in here, so we don't have to return an array
                 change = this.updated(child, changed, dt);
                 if (change) {
                     child.alive = child.sync(child.model, child.display, changed, dt);
@@ -65,22 +67,34 @@ module dsync {
         public updated<U, V>(target:Binding<U, V>, changed:boolean[], dt:number):boolean {
             changed.splice(0);
             if (target.last == null) {
-                target.last = target.state(target.model, target.display, dt);
-                for (var i = 0; i < target.last.length; ++i) {
-                  changed.push(true);
+                target.last = this._state(target, dt);
+                if (target.last != null) {
+                    for (var i = 0; i < target.last.length; ++i) {
+                        changed.push(true);
+                    }
                 }
                 return true;
             }
             var change = false;
-            var state = target.state(target.model, target.display, dt);
-            for (var i = 0; i < state.length; ++i) {
-                changed.push(state[i] !== target.last[i]);
-                if (changed[i]) {
-                  change = true;
+            var state = this._state(target, dt);
+            if (state != null) {
+                for (var i = 0; i < state.length; ++i) {
+                    changed.push(state[i] !== target.last[i]);
+                    if (changed[i]) {
+                      change = true;
+                    }
                 }
             }
             target.last = state;
             return change;
+        }
+
+        /* Get the state record for a target */
+        private _state(binding:any, dt:number):any[] {
+            if (binding.state == null) {
+                return null;
+            }
+            return binding.state(binding.model, binding.display, dt);
         }
     }
 }

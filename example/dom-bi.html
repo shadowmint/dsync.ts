@@ -60,7 +60,7 @@
   };
 
   // Update on changes to src
-  sync.channel(sync.channels.hello).add(applyModel, stateModel, model, display);
+  sync.channels.hello.add(model, display, applyModel, stateModel);
 
   // Trigger sync on state changes
   sync.watch(display.src, ['keydown'], sync.channels.hello);

@@ -4,11 +4,8 @@ module dsync {
     /* Top level manager for a set of synchronized objects */
     export class Sync {
 
-        /* Channels */
-        public channels:any = {};
-
         /* Actual channel objects */
-        private _channels:{[key:string]:Channel } = {};
+        public channels:any = {};
 
         /* The rate at which we poll for changes */
         private _pollRate:number;
@@ -25,12 +22,13 @@ module dsync {
         }
 
         /* Get access to an events channel */
-        public channel(name:string):Channel {
+        public channel(name:string, ready:boolean = true, locked:boolean = false):Channel {
             if (this.channels[name] === undefined) {
-                this.channels[name] = name;
-                this._channels[name] = new dsync.Channel();
+                this.channels[name] = new dsync.Channel();
+                this.channels[name].ready = ready;
+                this.channels[name].locked = locked;
             }
-            return this._channels[name];
+            return this.channels[name];
         }
 
         /* Update channels async */
@@ -38,10 +36,12 @@ module dsync {
             if (this._timer == null) {
                 this._timer = setTimeout(() => {
                     this._timer = null;
-                    for (var key in this._channels) {
-                        var chan = this._channels[key];
+                    for (var key in this.channels) {
+                        var chan = this.channels[key];
                         if (chan.ready) {
-                            chan.ready = false;
+                            if (!chan.locked) {
+                                chan.ready = false;
+                            }
                             chan.update();
                         }
                     }
@@ -61,6 +61,14 @@ module dsync {
                 channel.ready = true;
                 this.update();
             }, 1);
+        }
+
+        /* Shortcut for channel.add() */
+        public add<U, V>(channel:any, model:U, display:V, sync:Update<U,V>, state:State<U,V> = null):void {
+            if (typeof(channel) == 'string') {
+                channel = this.channel(channel);
+            }
+            channel.add(model, display, sync, state);
         }
 
         /*

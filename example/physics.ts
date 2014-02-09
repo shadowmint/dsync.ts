@@ -139,7 +139,6 @@ module physics {
                 this.readGeometry(body, body.data);
                 body = body.GetNext();
             }
-            this.parent.sync.touch('physics');
         }
     }
 
@@ -169,7 +168,7 @@ module physics {
 
         constructor() {
             this.sync = new dsync.Sync();
-            this.sync.channel('physics');
+            var physics = this.sync.channel('physics', true, true);
             this.pixi = new Pixi(this.sync);
             this.physics = new Phys(this);
             this._worker = (dt) => { this.step(dt); };
@@ -240,8 +239,8 @@ module physics {
         public create(x:number, y:number):void {
             var block = this._createBlock(x, y);
             var sprite = this._createSprite();
-            var physics =  this.sync.channel('physics');
-            physics.add<Block, Sprite>(this.blockSync, this.blockState, block, sprite);
+            var physics = this.sync.channels.physics;
+            this.sync.add<Block, Sprite>(physics, block, sprite, this.blockSync, this.blockState);
         }
 
         step(dt:number):void {

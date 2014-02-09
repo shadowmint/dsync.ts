@@ -17,10 +17,10 @@ class SyncTests extends turn.TestCase {
         var channel = <dsync.Channel> sync.channel('Hello');
 
         channel.add<any, any>(
-            (a:any, b:any, changed:boolean[], dt:number):boolean => { return true; },
-            (a:any, dt:number):any[] => { return []; },
             {},
-            {}
+            {},
+            (a:any, b:any, changed:boolean[], dt:number):boolean => { return true; },
+            (a:any, dt:number):any[] => { return []; }
         );
 
         this.assert.true(channel != null);
@@ -31,6 +31,8 @@ class SyncTests extends turn.TestCase {
         var sync = new dsync.Sync();
         var channel = <dsync.Channel> sync.channel('Hello');
         channel.add<any, any>(
+            {},
+            {},
             (a:any, b:any, changed:boolean[], dt:number):boolean => {
                 value = value + 1;
                 return true;
@@ -40,9 +42,7 @@ class SyncTests extends turn.TestCase {
                     return [value];
                 }
                 return [4];
-            },
-            {},
-            {}
+            }
         );
 
         channel.update();
@@ -60,10 +60,10 @@ class SyncTests extends turn.TestCase {
         var synced:number = 0;
 
         channel.add<any, any>(
-            (a:any, b:any, changed:boolean[], dt:number):boolean => { synced += 1; return true; },
-            (a:any, dt:number):any[] => { return [1]; },
             {},
-            {}
+            {},
+            (a:any, b:any, changed:boolean[], dt:number):boolean => { synced += 1; return true; },
+            (a:any, dt:number):any[] => { return [1]; }
         );
         channel.update();
         channel.update();
@@ -80,7 +80,7 @@ class SyncTests extends turn.TestCase {
         model.value = 1;
         model.key = 'hello';
 
-        channel.add<MyModel, MyDsp>(MyModelMap.sync, MyModelMap.state, model, dsp);
+        channel.add<MyModel, MyDsp>(model, dsp, MyModelMap.sync, MyModelMap.state);
         channel.update();
         var output1 = dsp.output;
 
@@ -102,6 +102,36 @@ class SyncTests extends turn.TestCase {
         this.assert.false(model.alive);
     }
 
+    test_can_watch_always_with_stateless():void {
+        var sync = new dsync.Sync();
+        var channel = <dsync.Channel> sync.channel('Hello');
+        var model = new MyModel();
+        var dsp = new MyDsp();
+
+        model.value = 1;
+        model.key = 'hello';
+
+        channel.add<MyModel, MyDsp>(model, dsp, MyModelMap.sync);
+        channel.update();
+        var output1 = dsp.output;
+
+        channel.update();
+        var output2 = dsp.output;
+
+        model.key = '99';
+        channel.update();
+        var output3 = dsp.output;
+
+        model.value = 15;
+        channel.update();
+        var output4 = dsp.output;
+
+        this.assert.equals(output1, 'hello::1');
+        this.assert.equals(output2, 'hello::1');
+        this.assert.equals(output3, '99::1');
+        this.assert.equals(output4, '99::15');
+        this.assert.false(model.alive);
+    }
 }
 runner.register(new SyncTests());
 
