@@ -52,9 +52,13 @@ module physics {
         /* Parent for notifications */
         parent:Demo;
 
+        /* The floor */
+        floor:any;
+
         /* Create a world */
         constructor(parent:Demo) {
             this.world = new p2.World();
+            this.world.broadphase = new p2.NaiveBroadphase(this.world);
 
             // Add a floor
             var planeShape = new p2.Plane();
@@ -62,6 +66,7 @@ module physics {
             planeBody.addShape(planeShape);
             this.world.addBody(planeBody);
             this.parent = parent;
+            this.floor = planeBody;
         }
 
         /* Create a body for the given block */
@@ -83,20 +88,43 @@ module physics {
         }
 
         /* Read geometry from a body */
-        public readGeometry(body:any, geom:number[]):void {
-            geom[0] = body.position[0];
-            geom[1] = body.position[1];
-            geom[4] = body.angle;
+        public readGeometry(body:any, block:Block):void {
+            if (block) {
+                block.geom[0] = body.position[0];
+                block.geom[1] = body.position[1];
+                block.geom[4] = body.angle;
+            }
         }
 
         /* Timestep */
-        public step():void {
+        public step(dt:number):void {
             this.world.step(1/60);
-            this.parent.sync.touch('body');
+            for (var i = 0; i < this.world.bodies.length; ++i) {
+                var body = this.world.bodies[i];
+                this.readGeometry(body, body.data);
+            }
+
+            var collisions = this.world.broadphase.getCollisionPairs();
+            for (var i = 0; i < collisions.length; i += 2) {
+                var block:Block = null;
+                if (collisions[i] == this.floor) {
+                    block = <Block> collisions[i + 1].data;
+                }
+                else if (collisions[i + 1] == this.floor) {
+                    block = <Block> collisions[i].data;
+                }
+                console.log(collisions[i]);
+                console.log(collisions[i+1]);
+                if (block) {
+                    block.age += dt / 1000;
+                    console.log('Touching floor for: ' + block.age);
+                    window['demo'].stop();
+                }
+            }
+
             this.parent.sync.touch('physics');
         }
     }
-
 
     /* Various actions on block elements */
     export class Demo {
@@ -117,42 +145,30 @@ module physics {
         public physics:P2;
 
         /* Set of blocks */
-        public blocks:Block[] = [];
+        //public blocks:Block[] = [];
 
         constructor() {
             this.sync = new dsync.Sync();
             this.sync.channel('physics');
-            this.sync.channel('body');
             this.pixi = new Pixi(this.sync);
             this.physics = new P2(this);
-            this._worker = () => { this.step(); };
-        }
-
-        /* Update the model from geometry */
-        public bodySync(b:any, s:Block, changed:boolean[], dt:number):boolean {
-            s.geom[0] = b.position[0];
-            s.geom[1] = b.position[1];
-            s.geom[4] = b.angle;
-            return s.alive;
-        }
-
-        /* Generate a state record for the body */
-        public bodyState(b:any, s:Block, dt:number):any[] {
-            return [b.position[0], b.position[1], b.angle];
+            this._worker = (dt) => { this.step(dt); };
         }
 
         /* Update the sprite to match the model */
         public blockSync(b:Block, s:Sprite, changed:boolean[], dt:number):boolean {
-            if (this.physics) {
-                this.physics.readGeometry(b.body, b.geom);
-                console.log(b.body);
-            }
             s.gc.position.x = b.geom[0] * 50;
             s.gc.position.y = 500 - b.geom[1] * 50;
             s.gc.scale.x = b.geom[2];
             s.gc.scale.y = b.geom[3];
             s.gc.rotation = -b.geom[4];
-            b.age += dt;
+            if (b.age > 5000) {
+                b.alive = false;
+            }
+            if (!b.alive) {
+                b.body.data = null;
+                this.physics.destroyBody(b.body);
+            }
             return b.alive;
         }
 
@@ -180,8 +196,9 @@ module physics {
             rtn.geom = [x, y, 0.5, 0.5, 0];
             rtn.parent = this;
             rtn.age = 0;
-            this.blocks.push(rtn);
+            //this.blocks.push(rtn);
             rtn.body = this.physics.body(rtn);
+            rtn.body.data = rtn;
             return rtn;
         }
 
@@ -189,18 +206,14 @@ module physics {
         public create(x:number, y:number):void {
             var block = this._createBlock(x, y);
             var sprite = this._createSprite();
-
             var physics =  this.sync.channel('physics');
-            var body =  this.sync.channel('body');
-
             physics.add<Block, Sprite>(this.blockSync, this.blockState, block, sprite);
-            body.add<any, Block>(this.bodySync, this.bodyState, block.body, block);
         }
 
-        step():void {
+        step(dt:number):void {
             if (this._running) {
                 requestAnimationFrame(this._worker);
-                this.physics.step();
+                this.physics.step(dt);
                 this.sync.update();
                 this.pixi.redraw();
             }

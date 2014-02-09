@@ -1,7 +1,7 @@
 <head>
     <script src="../bin/dsync.js"></script>
     <script src="bower_components/pixi/bin/pixi.js"></script>
-    <script src="bower_components/p2/build/p2.min.js"></script>
+    <script src="bower_components/p2/build/p2.js"></script>
     <script src="example.js"></script>
 </head>
 <body>
@@ -10,12 +10,12 @@
     var demo = new physics.Demo();
     demo.start();
 
-    demo.create(1.5, 7);
-    demo.create(1.5, 9);
-    demo.create(1.5, 11);
+//    demo.create(1.5, 7);
+//    demo.create(1.5, 9);
+//    demo.create(1.5, 11);
     demo.create(1.5, 12);
-    demo.create(1, 4);
-    demo.create(1, 2);
+//    demo.create(1, 4);
+    //demo.create(1, 2);
     demo.sync.touch(demo.sync.channels.physics);
 </script>
 </body>
