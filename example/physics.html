@@ -1,14 +1,14 @@
 <head>
     <script src="../bin/dsync.js"></script>
     <script src="bower_components/pixi/bin/pixi.js"></script>
-    <script src="bower_components/box2d/box2d.js"></script>
+    <script src="bower_components/p2/build/p2.min.js"></script>
     <script src="example.js"></script>
 </head>
 <body>
 
 <script>
     var demo = new physics.Demo();
-    demo.pixi.start();
+    demo.start();
 
     demo.create(1.5, 7);
     demo.create(1.5, 9);
@@ -17,57 +17,5 @@
     demo.create(1, 4);
     demo.create(1, 2);
     demo.sync.touch(demo.sync.channels.physics);
-
-    var bodies = [];
-
-    var gravity = new Box2D.b2Vec2(0.0, -9.8);
-    var world = new Box2D.b2World(gravity, true);
-
-    // Ground
-    var bd_ground = new Box2D.b2BodyDef();
-    bd_ground.set_type(Box2D.b2_staticBody);
-    var ground = world.CreateBody(bd_ground);
-    var shape0 = new Box2D.b2EdgeShape();
-    shape0.Set(new Box2D.b2Vec2(-10, 0), new Box2D.b2Vec2(10.0, 0));
-    ground.CreateFixture(shape0, 0.0);
-
-    // Block
-    for (var i = 0; i < demo.blocks.length; ++i) {
-        var shape = new Box2D.b2PolygonShape();
-        shape.SetAsBox(demo.blocks[i].geom[2], demo.blocks[i].geom[3]);
-        shape.density = 1;
-
-        var ZERO = new Box2D.b2Vec2(demo.blocks[i].geom[0], demo.blocks[i].geom[1]);
-
-        var bd = new Box2D.b2BodyDef();
-        bd.set_type(Box2D.b2_dynamicBody);
-        bd.set_position(ZERO);
-
-        var body = world.CreateBody(bd);
-        body.CreateFixture(shape, 1);
-        bodies.push(body);
-        demo.blocks[i].body = body;
-    }
-
-    function readObject(b) {
-        var body = b.body;
-        var bpos = body.GetPosition();
-        b.geom[0] = bpos.get_x();
-        b.geom[1] = 10.0 - bpos.get_y();
-        b.geom[4] = body.GetAngle();
-    }
-
-    var data = {};
-    var step = function () {
-        var ts = 1.0 / 60.0;
-        world.Step(ts, 6, 2);
-        for (var i = 0; i < demo.blocks.length; ++i) {
-            var b = demo.blocks[i];
-            readObject(b);
-        }
-        demo.sync.touch(demo.sync.channels.physics);
-        setTimeout(step, 10);
-    }
-    step();
 </script>
 </body>
