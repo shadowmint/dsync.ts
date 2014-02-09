@@ -1,15 +1,17 @@
 /// <reference path="../bin/dsync.d.ts"/>
 declare var PIXI:any;
-declare var p2:any;
+declare var Box2D:any;
 module physics {
 
     /* Model state for a block object */
     export class Block {
         public parent:Demo;
-        public alive:boolean; /* Is this block still alive? */
-        public geom:number[]; /* x, y, width, height, rotation */
-        public age:number;    /* How long have we been alive? */
-        public body:any;      /* Physics body */
+        public meta:number = 1; /* Magical type id */
+        public alive:boolean;   /* Is this block still alive? */
+        public geom:number[];   /* x, y, width, height, rotation */
+        public age:number;      /* How long have we been alive? */
+        public body:any;        /* Physics body */
+        public ground:boolean;  /* Touching the ground? */
     }
 
     /* Display for a block object */
@@ -41,10 +43,15 @@ module physics {
         public redraw():void {
             this.renderer.render(this.stage);
         }
+
+        /* Remove a sprite */
+        public destroySprite(s:Sprite):void {
+            this.stage.removeChild(s.gc);
+        }
     }
 
-    /* P2 world */
-    export class P2 {
+    /* Phys world */
+    export class Phys {
 
         /* The physics world */
         world:any;
@@ -52,82 +59,95 @@ module physics {
         /* Parent for notifications */
         parent:Demo;
 
-        /* The floor */
-        floor:any;
+        /* Ground marker */
+        ground:any;
 
         /* Create a world */
         constructor(parent:Demo) {
-            this.world = new p2.World();
-            this.world.broadphase = new p2.NaiveBroadphase(this.world);
-
-            // Add a floor
-            var planeShape = new p2.Plane();
-            var planeBody = new p2.Body({ position:[0,1] });
-            planeBody.addShape(planeShape);
-            this.world.addBody(planeBody);
             this.parent = parent;
-            this.floor = planeBody;
+            var gravity = new Box2D.b2Vec2(0.0, -9.8);
+            var world = new Box2D.b2World(gravity, true);
+
+            // Ground
+            var shape = new Box2D.b2EdgeShape();
+            shape.Set(new Box2D.b2Vec2(-30, 0), new Box2D.b2Vec2(30.0, 0));
+
+            var bd_ground = new Box2D.b2BodyDef();
+            bd_ground.set_type(Box2D.b2_staticBody);
+            var ground = world.CreateBody(bd_ground);
+            ground.data = {'meta': 0};
+            ground.CreateFixture(shape, 0.0);
+            this.ground = ground;
+
+            // Contacts watcher
+            var listener = new Box2D.b2ContactListener();
+            Box2D.customizeVTable(listener, [{
+                original: Box2D.b2ContactListener.prototype.BeginContact,
+                replacement: function (thsPtr, contactPtr) {
+                    var contact = Box2D.wrapPointer( contactPtr, Box2D.b2Contact );
+                    var fixtureA = contact.GetFixtureA();
+                    var fixtureB = contact.GetFixtureB();
+                    if ((fixtureA.GetBody().data.meta == 0) || (fixtureB.GetBody().data.meta == 0)) {
+                        var block = fixtureA.GetBody().data.meta == 1 ? fixtureA.GetBody().data : fixtureB.GetBody().data;
+                        block.ground = true;
+                    }
+                }
+            }]);
+            world.SetContactListener(listener);
+
+            this.world = world;
         }
 
         /* Create a body for the given block */
         public body(block:Block):any {
-            var shape = new p2.Rectangle(block.geom[2] * 2, block.geom[3] * 2);
-            var body = new p2.Body({
-                mass:1,
-                position:[block.geom[0],block.geom[1]],
-                angularVelocity:0
-            });
-            body.addShape(shape);
-            this.world.addBody(body);
+            var shape = new Box2D.b2PolygonShape();
+            shape.SetAsBox(block.geom[2], block.geom[3]);
+            shape.density = 1;
+
+            var ZERO = new Box2D.b2Vec2(block.geom[0], block.geom[1]);
+
+            var bd = new Box2D.b2BodyDef();
+            bd.set_type(Box2D.b2_dynamicBody);
+            bd.set_position(ZERO);
+
+            var body = this.world.CreateBody(bd);
+            body.CreateFixture(shape, 1);
             return body;
         }
 
         /* Destroy a body */
         public destroyBody(body:any):void {
-            this.world.removeBody(body);
+            this.world.DestroyBody(body);
         }
 
         /* Read geometry from a body */
         public readGeometry(body:any, block:Block):void {
-            if (block) {
-                block.geom[0] = body.position[0];
-                block.geom[1] = body.position[1];
-                block.geom[4] = body.angle;
+            if ((block) && (block.meta == 1)) {
+                var body = block.body;
+                var bpos = body.GetPosition();
+                block.geom[0] = bpos.get_x();
+                block.geom[1] = bpos.get_y();
+                block.geom[4] = body.GetAngle();
             }
         }
 
         /* Timestep */
         public step(dt:number):void {
-            this.world.step(1/60);
-            for (var i = 0; i < this.world.bodies.length; ++i) {
-                var body = this.world.bodies[i];
+            this.world.Step(1/60, 6, 2);
+            var body = this.world.GetBodyList();
+            while(body.a != 0) {
                 this.readGeometry(body, body.data);
+                body = body.GetNext();
             }
-
-            var collisions = this.world.broadphase.getCollisionPairs();
-            for (var i = 0; i < collisions.length; i += 2) {
-                var block:Block = null;
-                if (collisions[i] == this.floor) {
-                    block = <Block> collisions[i + 1].data;
-                }
-                else if (collisions[i + 1] == this.floor) {
-                    block = <Block> collisions[i].data;
-                }
-                console.log(collisions[i]);
-                console.log(collisions[i+1]);
-                if (block) {
-                    block.age += dt / 1000;
-                    console.log('Touching floor for: ' + block.age);
-                    window['demo'].stop();
-                }
-            }
-
             this.parent.sync.touch('physics');
         }
     }
 
     /* Various actions on block elements */
     export class Demo {
+
+        /* Count of active items */
+        public count:number = 0;
 
         /* Worker for animation frames */
         private _worker:any;
@@ -142,7 +162,7 @@ module physics {
         public pixi:Pixi;
 
         /* Physics model */
-        public physics:P2;
+        public physics:Phys;
 
         /* Set of blocks */
         //public blocks:Block[] = [];
@@ -151,7 +171,7 @@ module physics {
             this.sync = new dsync.Sync();
             this.sync.channel('physics');
             this.pixi = new Pixi(this.sync);
-            this.physics = new P2(this);
+            this.physics = new Phys(this);
             this._worker = (dt) => { this.step(dt); };
         }
 
@@ -162,12 +182,15 @@ module physics {
             s.gc.scale.x = b.geom[2];
             s.gc.scale.y = b.geom[3];
             s.gc.rotation = -b.geom[4];
-            if (b.age > 5000) {
+            s.gc.alpha = 1;
+            if (b.ground) {
+                b.age += dt;
+            }
+            if (b.age > 2000) {
                 b.alive = false;
             }
             if (!b.alive) {
-                b.body.data = null;
-                this.physics.destroyBody(b.body);
+                b.parent.destroyBlock(b, s);
             }
             return b.alive;
         }
@@ -175,16 +198,26 @@ module physics {
         /* Generate a state record for the block */
         public blockState(b:Block, s:Sprite, dt:number):any[] {
             var rtn = b.geom.slice(0);
+            rtn.push(b.age);
             return rtn;
+        }
+
+        /* Destroy a block */
+        public destroyBlock(b:Block, s:Sprite):void {
+            b.body.data = null;
+            b.parent.physics.destroyBody(b.body);
+            b.parent.pixi.destroySprite(s);
+            this.count -= 1;
         }
 
         /* Factory for block objects */
         private _createSprite():Sprite {
             var rtn = new Sprite();
-            var color = 0x333333 + (Math.floor(Math.random() * 128) << 16) + (Math.floor(Math.random() * 128) << 8) + (Math.floor(Math.random() * 128) << 8);
+            var color = 0x808080 + (Math.floor(Math.random() * 128) << 16) + (Math.floor(Math.random() * 128) << 8) + (Math.floor(Math.random() * 128));
             rtn.gc = new PIXI.Graphics();
             rtn.gc.beginFill(color);
             rtn.gc.drawRect(-50, -50, 100, 100);
+            rtn.gc.alpha = 0;
             this.pixi.stage.addChild(rtn.gc);
             return rtn;
         }
@@ -196,9 +229,10 @@ module physics {
             rtn.geom = [x, y, 0.5, 0.5, 0];
             rtn.parent = this;
             rtn.age = 0;
-            //this.blocks.push(rtn);
             rtn.body = this.physics.body(rtn);
+            rtn.ground = false;
             rtn.body.data = rtn;
+            this.count += 1;
             return rtn;
         }
 
