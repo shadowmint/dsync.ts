@@ -1,3 +1,0 @@
-[submodule "lib/turn"]
-	path = lib/turn
-	url = https://github.com/shadowmint/turn.ts.git
