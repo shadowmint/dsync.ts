@@ -22,7 +22,7 @@ module dsync {
         }
 
         /* Get access to an events channel */
-        public channel(name:string, ready:boolean = true, locked:boolean = false):Channel {
+        public channel(name:any, ready:boolean = true, locked:boolean = false):Channel {
             if (this.channels[name] === undefined) {
                 this.channels[name] = new dsync.Channel();
                 this.channels[name].ready = ready;
@@ -55,7 +55,7 @@ module dsync {
          */
         public touch(channel:any) {
             setTimeout(() => {
-                if (typeof(channel) == 'string') {
+                if (!(channel instanceof Channel)) {
                     channel = this.channel(channel);
                 }
                 channel.ready = true;
@@ -65,7 +65,7 @@ module dsync {
 
         /* Shortcut for channel.add() */
         public add<U, V>(channel:any, model:U, display:V, sync:Update<U,V>, state:State<U,V> = null):void {
-            if (typeof(channel) == 'string') {
+            if (!(channel instanceof Channel)) {
                 channel = this.channel(channel);
             }
             channel.add(model, display, sync, state);
@@ -78,7 +78,7 @@ module dsync {
          * @param channel The channel to invoke when it happens
          */
         public watch(e:HTMLElement, events:string[], channel:any):void {
-            if (typeof(channel) == 'string') {
+            if (!(channel instanceof Channel)) {
                 channel = this.channel(channel);
             }
             dsync.dom.watch(this, e, events, channel);
